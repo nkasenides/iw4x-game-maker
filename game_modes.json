@@ -1,0 +1,99 @@
+{
+  "gameModes": [
+    {
+      "category": "Core Multiplayer Modes",
+      "modes": [
+        {
+          "name": "Team Deathmatch",
+          "description": "Classic high-frag rules of team vs team",
+          "type": "Team"
+        },
+        {
+          "name": "Free-For-All",
+          "description": "Every player for themselves",
+          "type": "Solo"
+        },
+        {
+          "name": "Kill Confirmed",
+          "description": "A twist on TDM where players must collect dog tags dropped by fallen enemies to score",
+          "type": "Team"
+        },
+        {
+          "name": "Domination",
+          "description": "Capture and hold three flag locations to accumulate point thresholds",
+          "type": "Team"
+        },
+        {
+          "name": "Search and Destroy",
+          "description": "One-life tactical rounds with alternating bomb planting and defusing",
+          "type": "Team"
+        },
+        {
+          "name": "Capture the Flag",
+          "description": "Objective tug-of-war mode for coordinated team play",
+          "type": "Team"
+        },
+        {
+          "name": "Demolition",
+          "description": "Objective mode featuring bomb sites for coordinated team play",
+          "type": "Team"
+        },
+        {
+          "name": "Team Defender",
+          "description": "Capture the flag to multiply point values earned by teammates",
+          "type": "Team"
+        },
+        {
+          "name": "Headquarters Pro",
+          "description": "Legacy objective mode featuring neutral capture areas",
+          "type": "Team"
+        },
+        {
+          "name": "Sabotage",
+          "description": "Legacy objective mode featuring movable bomb sites",
+          "type": "Team"
+        },
+        {
+          "name": "Ground War",
+          "description": "High-player-count playlist mixing large-scale Team Deathmatch and Domination",
+          "type": "Team"
+        }
+      ]
+    },
+    {
+      "category": "Party and Custom Modes",
+      "modes": [
+        {
+          "name": "Infected",
+          "description": "Survivors attempt to outlast infected players who convert targets upon a successful knife kill",
+          "type": "Special"
+        },
+        {
+          "name": "Drop Zone",
+          "description": "Teams fight to control a designated drop zone area that continuously rains down care packages",
+          "type": "Team"
+        },
+        {
+          "name": "Gun Game",
+          "description": "Players progress through a fixed sequence of weapon kills to win",
+          "type": "Solo"
+        },
+        {
+          "name": "One in the Chamber",
+          "description": "Limited life pistol match where bullets are earned strictly via eliminations",
+          "type": "Solo"
+        },
+        {
+          "name": "Juggernaut",
+          "description": "Combat encounters centered around heavily armored boss units",
+          "type": "Solo"
+        },
+        {
+          "name": "Team Juggernaut",
+          "description": "Combat encounters centered around heavily armored boss units",
+          "type": "Team"
+        }
+      ]
+    }
+  ]
+}

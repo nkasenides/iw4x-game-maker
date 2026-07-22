@@ -311,7 +311,88 @@
       </div>
     </div>
 
-  </main>
+    <!-- Game Mode Section -->
+    <div class="mt-12">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-1 h-6 bg-cod-gold"></div>
+        <h2 class="text-xl tracking-widest uppercase font-semibold text-white">Game Mode Selection</h2>
+      </div>
+      <p class="text-cod-muted text-sm tracking-wider ml-4 pl-3 border-l border-cod-border">
+        Choose a game mode for your setup
+      </p>
+    </div>
+
+    <!-- Game Mode Dropdown -->
+    <div class="relative w-full max-w-lg mt-4" id="gamemode-dropdown-wrapper">
+
+      <!-- Trigger button -->
+      <button
+        id="gamemode-trigger"
+        class="w-full flex items-center gap-3 bg-cod-panel border border-cod-border px-3 py-2 clip-corner hover:border-cod-green/60 transition-colors focus:outline-none focus:border-cod-lime group"
+        onclick="toggleGamemodeDropdown()"
+      >
+        <span id="selected-gamemode" class="flex-1 text-left text-cod-muted tracking-widest uppercase text-sm font-medium">
+          Select a game mode...
+        </span>
+
+        <svg id="gamemode-chevron" class="w-4 h-4 text-cod-muted group-hover:text-cod-lime transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Dropdown panel -->
+      <div
+        id="gamemode-dropdown"
+        class="hidden absolute z-50 w-full mt-1 bg-cod-panel border border-cod-border shadow-2xl shadow-black/60"
+      >
+        <!-- Search -->
+        <div class="p-2 border-b border-cod-border">
+          <input
+            id="gamemode-search-input"
+            type="text"
+            placeholder="SEARCH MODES..."
+            class="w-full bg-cod-dark border border-cod-border px-3 py-2 text-sm tracking-widest uppercase text-cod-text placeholder-cod-muted focus:outline-none focus:border-cod-lime transition-colors"
+            oninput="filterGamemodes(this.value)"
+          />
+        </div>
+
+        <!-- Category filters -->
+        <div id="gamemode-category-filters" class="flex flex-wrap gap-1 px-2 py-2 border-b border-cod-border">
+          <button
+            class="gamemode-category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors"
+            data-cat="all"
+            onclick="filterGamemodeCategory(this)"
+          >All</button>
+        </div>
+
+        <!-- Game modes list -->
+        <div id="gamemode-list" class="overflow-y-auto max-h-72">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Count -->
+        <div class="px-3 py-2 border-t border-cod-border">
+          <span id="gamemode-count" class="text-xs tracking-widest text-cod-muted uppercase"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected game mode info card -->
+    <div id="gamemode-info-card" class="hidden mt-6 max-w-lg">
+      <div class="bg-cod-panel border border-cod-border clip-corner-lg overflow-hidden scanlines relative">
+        <div class="flex">
+          <!-- Info -->
+          <div class="flex-1 p-4">
+            <div class="flex items-start justify-between gap-2">
+              <h3 id="gamemode-card-name" class="text-xl font-bold tracking-widest uppercase text-white"></h3>
+              <span id="gamemode-card-type" class="text-xs tracking-widest uppercase px-2 py-0.5 border font-medium"></span>
+            </div>
+            <p id="gamemode-card-category" class="text-xs tracking-widest uppercase text-cod-gold mt-1"></p>
+            <p id="gamemode-card-desc" class="text-xs tracking-widest uppercase text-cod-muted mt-3 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+    </div>
 
   <script>
     let allMaps = [];
@@ -320,9 +401,17 @@
     let selectedMap = null;
     let activeStatuses = new Set(['working']); // Default: only show working maps
 
+    // Game modes
+    let allGameModes = [];
+    let activeGamemodeCategory = 'Core Multiplayer Modes'; // Default: Core modes
+    let gamemodeSearchQuery = '';
+    let selectedGamemode = null;
+
     // LocalStorage keys
     const STORAGE_CATEGORIES = 'mapFilters_categories';
     const STORAGE_STATUSES = 'mapFilters_statuses';
+    const STORAGE_GAMEMODE = 'mapFilters_gamemode';
+    const STORAGE_GAMEMODE_CATEGORY = 'mapFilters_gamemodeCategory';
 
     // Save filters to localStorage
     function saveFilters() {
@@ -619,7 +708,162 @@
       }
     });
 
+    // Game mode functions
+    async function loadGameModes() {
+      const res = await fetch('game_modes.json');
+      const data = await res.json();
+      allGameModes = data.gameModes || data;
+      buildGamemodeCategories();
+      renderGamemodes();
+    }
+
+    function buildGamemodeCategories() {
+      const container = document.getElementById('gamemode-category-filters');
+      container.innerHTML = '';
+      
+      // Add "All" button
+      const allBtn = document.createElement('button');
+      allBtn.className = 'gamemode-category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors';
+      allBtn.dataset.cat = 'all';
+      allBtn.textContent = 'All';
+      allBtn.onclick = function() { filterGamemodeCategory(this); };
+      container.appendChild(allBtn);
+      
+      allGameModes.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'gamemode-category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors';
+        btn.dataset.cat = cat.category;
+        btn.textContent = cat.category;
+        btn.onclick = function() { filterGamemodeCategory(this); };
+        container.appendChild(btn);
+      });
+      updateGamemodeCategoryButtonStyles();
+    }
+
+    function filterGamemodeCategory(btn) {
+      activeGamemodeCategory = btn.dataset.cat;
+      document.querySelectorAll('.gamemode-category-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateGamemodeCategoryButtonStyles();
+      renderGamemodes();
+    }
+
+    function updateGamemodeCategoryButtonStyles() {
+      document.querySelectorAll('.gamemode-category-btn').forEach(btn => {
+        if (btn.classList.contains('active')) {
+          btn.className = 'gamemode-category-btn active text-xs tracking-widest uppercase px-2 py-1 border transition-colors bg-cod-green/20 border-cod-lime text-cod-lime';
+        } else {
+          btn.className = 'gamemode-category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors border-cod-border text-cod-muted hover:border-cod-green hover:text-cod-text';
+        }
+      });
+      document.querySelectorAll('.gamemode-category-btn').forEach(btn => {
+        btn.onclick = function() { filterGamemodeCategory(this); };
+      });
+    }
+
+    function filterGamemodes(query) {
+      gamemodeSearchQuery = query.trim().toLowerCase();
+      renderGamemodes();
+    }
+
+    function renderGamemodes() {
+      const list = document.getElementById('gamemode-list');
+      list.innerHTML = '';
+
+      let filtered = [];
+      
+      if (activeGamemodeCategory === 'all') {
+        // Show all modes from all categories
+        allGameModes.forEach(cat => {
+          filtered.push(...cat.modes);
+        });
+      } else {
+        // Show modes from selected category
+        const category = allGameModes.find(c => c.category === activeGamemodeCategory);
+        if (category) {
+          filtered = category.modes;
+        }
+      }
+      
+      // Apply search filter
+      filtered = filtered.filter(m => {
+        const searchMatch = !gamemodeSearchQuery || m.name.toLowerCase().includes(gamemodeSearchQuery) || m.description.toLowerCase().includes(gamemodeSearchQuery);
+        return searchMatch;
+      });
+
+      document.getElementById('gamemode-count').textContent = `${filtered.length} mode${filtered.length !== 1 ? 's' : ''}`;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="px-4 py-6 text-center text-cod-muted text-sm tracking-widest uppercase">No modes found</div>`;
+        return;
+      }
+
+      filtered.forEach(mode => {
+        const item = document.createElement('div');
+        item.className = `map-item flex items-center gap-3 px-3 py-2 cursor-pointer transition-all ${selectedGamemode?.name === mode.name ? 'selected' : ''}`;
+        item.onclick = () => selectGamemode(mode);
+
+        const typeColor = mode.type === 'Team' ? 'text-cod-lime' : mode.type === 'Solo' ? 'text-cod-gold' : 'text-cod-green';
+
+        item.innerHTML = `
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold tracking-widest uppercase text-cod-text truncate">${mode.name}</div>
+            <div class="text-xs tracking-wider uppercase ${typeColor}">${mode.type}</div>
+          </div>
+        `;
+
+        list.appendChild(item);
+      });
+    }
+
+    function selectGamemode(mode) {
+      selectedGamemode = mode;
+
+      document.getElementById('selected-gamemode').textContent = mode.name;
+      document.getElementById('selected-gamemode').classList.replace('text-cod-muted', 'text-white');
+
+      document.getElementById('gamemode-card-name').textContent = mode.name;
+      document.getElementById('gamemode-card-category').textContent = activeGamemodeCategory;
+
+      const typeEl = document.getElementById('gamemode-card-type');
+      typeEl.textContent = mode.type;
+      const typeStyle = mode.type === 'Team' ? 'text-[#8ab84a] border-[#4a7c3f]' : mode.type === 'Solo' ? 'text-[#c8a84b] border-[#7a6020]' : 'text-[#4a7c3f] border-[#2e5c2f]';
+      typeEl.className = `text-xs tracking-widest uppercase px-2 py-0.5 border font-medium ${typeStyle}`;
+
+      document.getElementById('gamemode-card-desc').textContent = mode.description;
+
+      document.getElementById('gamemode-info-card').classList.remove('hidden');
+
+      closeGamemodeDropdown();
+      renderGamemodes();
+    }
+
+    function toggleGamemodeDropdown() {
+      const dd = document.getElementById('gamemode-dropdown');
+      const chevron = document.getElementById('gamemode-chevron');
+      if (dd.classList.contains('hidden')) {
+        dd.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
+        setTimeout(() => document.getElementById('gamemode-search-input').focus(), 50);
+      } else {
+        closeGamemodeDropdown();
+      }
+    }
+
+    function closeGamemodeDropdown() {
+      document.getElementById('gamemode-dropdown').classList.add('hidden');
+      document.getElementById('gamemode-chevron').style.transform = '';
+    }
+
+    // Close gamemode dropdown on outside click
+    document.addEventListener('click', e => {
+      if (!document.getElementById('gamemode-dropdown-wrapper').contains(e.target)) {
+        closeGamemodeDropdown();
+      }
+    });
+
     loadMaps();
+    loadGameModes();
   </script>
 </body>
 </html>
