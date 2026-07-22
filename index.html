@@ -46,6 +46,41 @@
         radial-gradient(ellipse at 80% 20%, rgba(200,168,75,0.03) 0%, transparent 50%);
     }
 
+    /* Animated map background */
+    #map-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.25;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes panLeftToRight {
+      0% { background-position: -100% center; }
+      100% { background-position: 100% center; }
+    }
+
+    @keyframes panRightToLeft {
+      0% { background-position: 100% center; }
+      100% { background-position: -100% center; }
+    }
+
+    #map-background.animate-pan {
+      animation: panLeftToRight 25s ease-in-out infinite alternate;
+    }
+
+    /* Main content positioned above background */
+    main {
+      position: relative;
+      z-index: 10;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #131613; }
@@ -104,6 +139,9 @@
   </style>
 </head>
 <body class="min-h-screen text-cod-text">
+
+  <!-- Animated map background -->
+  <div id="map-background"></div>
 
   <!-- Header -->
   <header class="border-b border-cod-border bg-cod-dark relative overflow-hidden">
@@ -201,13 +239,13 @@
               </span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer hover:text-cod-gold transition-colors">
-              <input type="checkbox" id="status-nowaypoints" class="status-filter" value="not_working" onchange="applyFilters()" />
+              <input type="checkbox" id="status-nowaypoints" class="status-filter" value="no_waypoint" onchange="applyFilters()" />
               <span class="text-xs tracking-widest uppercase flex items-center gap-1">
                 <span class="w-2 h-2 rounded-full bg-cod-gold inline-block"></span>No Waypoints
               </span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer hover:text-cod-red transition-colors">
-              <input type="checkbox" id="status-broken" class="status-filter" value="broken" onchange="applyFilters()" />
+              <input type="checkbox" id="status-broken" class="status-filter" value="not_working" onchange="applyFilters()" />
               <span class="text-xs tracking-widest uppercase flex items-center gap-1">
                 <span class="w-2 h-2 rounded-full bg-cod-red inline-block"></span>Broken
               </span>
@@ -242,11 +280,11 @@
     </div>
 
     <!-- Selected map info card -->
-    <div id="map-info-card" class="hidden mt-8">
+    <div id="map-info-card" class="hidden mt-6 max-w-lg">
       <div class="bg-cod-panel border border-cod-border clip-corner-lg overflow-hidden scanlines relative">
-        <div class="flex flex-col md:flex-row">
+        <div class="flex">
           <!-- Map image large -->
-          <div class="w-full md:w-80 h-60 flex-shrink-0 bg-cod-dark relative overflow-hidden flex items-center justify-center">
+          <div class="w-40 h-28 flex-shrink-0 bg-cod-dark relative overflow-hidden flex items-center justify-center">
             <img
               id="card-img"
               src=""
@@ -254,19 +292,19 @@
               class="w-full h-full object-cover"
               onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden')"
             />
-            <div id="card-img-placeholder" class="absolute inset-0 items-center justify-center text-cod-muted text-6xl tracking-widest font-bold hidden">?</div>
+            <div id="card-img-placeholder" class="absolute inset-0 items-center justify-center text-cod-muted text-2xl tracking-widest font-bold hidden">?</div>
             <div class="absolute inset-0 bg-gradient-to-r from-transparent to-cod-panel/60"></div>
           </div>
           <!-- Info -->
-          <div class="flex-1 p-6">
-            <div class="flex items-start justify-between gap-4 mb-3">
-              <h3 id="card-name" class="text-3xl font-bold tracking-widest uppercase text-white leading-tight"></h3>
-              <span id="card-status" class="text-sm tracking-widest uppercase px-3 py-1 border font-medium flex-shrink-0"></span>
+          <div class="flex-1 p-4">
+            <div class="flex items-start justify-between gap-2">
+              <h3 id="card-name" class="text-xl font-bold tracking-widest uppercase text-white"></h3>
+              <span id="card-status" class="text-xs tracking-widest uppercase px-2 py-0.5 border font-medium"></span>
             </div>
-            <p id="card-category" class="text-sm tracking-widest uppercase text-cod-gold font-semibold mb-4"></p>
-            <div class="mt-4 pt-4 border-t border-cod-border flex gap-6 text-sm tracking-wider text-cod-muted uppercase">
+            <p id="card-category" class="text-xs tracking-widest uppercase text-cod-gold mt-1"></p>
+            <div class="mt-3 pt-3 border-t border-cod-border flex gap-4 text-xs tracking-wider text-cod-muted uppercase">
               <span>Bots</span>
-              <span id="card-waypoints" class="font-semibold text-base"></span>
+              <span id="card-waypoints" class="font-semibold"></span>
             </div>
           </div>
         </div>
@@ -277,10 +315,42 @@
 
   <script>
     let allMaps = [];
-    let activeCategory = 'all';
+    let activeCategories = new Set(['all']); // Default: select all
     let searchQuery = '';
     let selectedMap = null;
     let activeStatuses = new Set(['working']); // Default: only show working maps
+
+    // LocalStorage keys
+    const STORAGE_CATEGORIES = 'mapFilters_categories';
+    const STORAGE_STATUSES = 'mapFilters_statuses';
+
+    // Save filters to localStorage
+    function saveFilters() {
+      localStorage.setItem(STORAGE_CATEGORIES, JSON.stringify(Array.from(activeCategories)));
+      localStorage.setItem(STORAGE_STATUSES, JSON.stringify(Array.from(activeStatuses)));
+    }
+
+    // Load filters from localStorage
+    function loadFilters() {
+      const savedCategories = localStorage.getItem(STORAGE_CATEGORIES);
+      const savedStatuses = localStorage.getItem(STORAGE_STATUSES);
+
+      if (savedCategories) {
+        try {
+          activeCategories = new Set(JSON.parse(savedCategories));
+        } catch (e) {
+          activeCategories = new Set(['all']);
+        }
+      }
+
+      if (savedStatuses) {
+        try {
+          activeStatuses = new Set(JSON.parse(savedStatuses));
+        } catch (e) {
+          activeStatuses = new Set(['working']);
+        }
+      }
+    }
 
     const categoryColors = {
       'MW1':        'text-sky-400 border-sky-800',
@@ -300,13 +370,13 @@
     };
     const statusLabel = {
       'working':     'Working',
-      'not_working': 'No Waypoints',
-      'broken':      'Broken',
+      'no_waypoint': 'No Waypoints',
+      'not_working': 'Broken',
     };
     const statusStyle = {
       'working':     'text-[#8ab84a] border-[#4a7c3f]',
-      'not_working': 'text-[#c8a84b] border-[#7a6020]',
-      'broken':      'text-[#c0392b] border-[#7a1a10]',
+      'no_waypoint': 'text-[#c8a84b] border-[#7a6020]',
+      'not_working': 'text-[#c0392b] border-[#7a1a10]',
     };
 
     function mapImagePath(map) {
@@ -322,7 +392,9 @@
       const res = await fetch('map-data.json');
       const data = await res.json();
       allMaps = data.maps;
+      loadFilters(); // Load saved filters
       buildCategoryFilters();
+      applyStatusFilters(); // Apply saved status filters to checkboxes
       renderMaps();
     }
 
@@ -341,21 +413,45 @@
     }
 
     function filterCategory(btn) {
-      activeCategory = btn.dataset.cat;
-      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+
+      if (cat === 'all') {
+        // When 'All' is clicked, select all categories
+        activeCategories.clear();
+        activeCategories.add('all');
+      } else {
+        // When a specific category is clicked
+        if (activeCategories.has('all')) {
+          activeCategories.delete('all'); // Remove 'all' when selecting specific categories
+        }
+
+        if (activeCategories.has(cat)) {
+          activeCategories.delete(cat);
+        } else {
+          activeCategories.add(cat);
+        }
+
+        // If no categories are selected, select all
+        if (activeCategories.size === 0) {
+          activeCategories.add('all');
+        }
+      }
+
       updateCategoryButtonStyles();
+      saveFilters(); // Save to localStorage
       renderMaps();
     }
 
     function updateCategoryButtonStyles() {
       document.querySelectorAll('.category-btn').forEach(btn => {
-        if (btn.classList.contains('active')) {
+        const cat = btn.dataset.cat;
+        const isActive = activeCategories.has(cat);
+
+        if (isActive) {
           btn.className = 'category-btn active text-xs tracking-widest uppercase px-2 py-1 border transition-colors bg-cod-green/20 border-cod-lime text-cod-lime';
         } else {
           btn.className = 'category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors border-cod-border text-cod-muted hover:border-cod-green hover:text-cod-text';
         }
-        btn.dataset.cat && (btn.dataset.cat = btn.dataset.cat); // preserve
       });
       // Re-attach onclick after class reset
       document.querySelectorAll('.category-btn').forEach(btn => {
@@ -373,7 +469,15 @@
       document.querySelectorAll('.status-filter:checked').forEach(checkbox => {
         activeStatuses.add(checkbox.value);
       });
+      saveFilters(); // Save to localStorage
       renderMaps();
+    }
+
+    function applyStatusFilters() {
+      // Update checkboxes based on activeStatuses
+      document.querySelectorAll('.status-filter').forEach(checkbox => {
+        checkbox.checked = activeStatuses.has(checkbox.value);
+      });
     }
 
     function renderMaps() {
@@ -381,11 +485,14 @@
       list.innerHTML = '';
 
       const filtered = allMaps.filter(m => {
-        const catMatch = activeCategory === 'all' || m.category === activeCategory;
+        const catMatch = activeCategories.has('all') || activeCategories.has(m.category);
         const searchMatch = !searchQuery || m.name.toLowerCase().includes(searchQuery) || m.category.toLowerCase().includes(searchQuery);
         const statusMatch = activeStatuses.has(m.status);
         return catMatch && searchMatch && statusMatch;
       });
+
+      // Sort alphabetically by map name
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
 
       document.getElementById('map-count').textContent = `${filtered.length} map${filtered.length !== 1 ? 's' : ''}`;
 
@@ -433,8 +540,13 @@
     function selectMap(map) {
       selectedMap = map;
 
-      // Update trigger button
+      // Set animated background
       const imgPath = mapImagePath(map);
+      const bgEl = document.getElementById('map-background');
+      bgEl.style.backgroundImage = `url('${imgPath}')`;
+      bgEl.classList.add('animate-pan');
+
+      // Update trigger button
       const img = document.getElementById('selected-img');
       const placeholder = document.getElementById('selected-placeholder');
       img.src = imgPath;
@@ -466,7 +578,7 @@
       statusEl.className = `text-xs tracking-widest uppercase px-2 py-0.5 border font-medium ${statusStyle[map.status]}`;
 
       const wpEl = document.getElementById('card-waypoints');
-      if (map.status === 'not_working') {
+      if (map.status === 'no_waypoint') {
         wpEl.textContent = 'No Waypoints';
         wpEl.className = 'font-semibold text-cod-gold';
       } else if (map.status === 'working') {
