@@ -1,6 +1,6 @@
 {
-  "name": "IW4X Game Maker",
-  "short_name": "IW4X Maker",
+  "name": "IW5X Game Maker",
+  "short_name": "IW5X Maker",
   "description": "Create custom playlists for Call of Duty games. Select maps and game modes to build your perfect loadout.",
   "start_url": "./",
   "scope": "./",
@@ -10,27 +10,27 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "img/iw5x_logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon.svg",
+      "src": "img/iw5x_logo.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon.svg",
+      "src": "img/iw5x_logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icon.svg",
+      "src": "img/iw5x_logo.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
