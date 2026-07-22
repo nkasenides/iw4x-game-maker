@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IW4X Game Maker</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- COD-style font -->
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cod: ['Oswald', 'Rajdhani', 'sans-serif'],
+          },
+          colors: {
+            cod: {
+              black:   '#0b0c0b',
+              dark:    '#131613',
+              panel:   '#1a1d1a',
+              border:  '#2e3430',
+              green:   '#4a7c3f',
+              lime:    '#8ab84a',
+              gold:    '#c8a84b',
+              red:     '#c0392b',
+              text:    '#d6dcd6',
+              muted:   '#7a8a7a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0b0c0b;
+      font-family: 'Oswald', 'Rajdhani', sans-serif;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(74,124,63,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(200,168,75,0.03) 0%, transparent 50%);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #131613; }
+    ::-webkit-scrollbar-thumb { background: #2e3430; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a7c3f; }
+
+    /* Dropdown animation */
+    #map-dropdown {
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    #map-dropdown.hidden {
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+    }
+    #map-dropdown:not(.hidden) {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Map item hover */
+    .map-item:hover {
+      background-color: #1e2620;
+      border-left: 2px solid #8ab84a;
+    }
+    .map-item {
+      border-left: 2px solid transparent;
+    }
+    .map-item.selected {
+      background-color: #1e2620;
+      border-left: 2px solid #c8a84b;
+    }
+
+    /* Clip corner decoration */
+    .clip-corner {
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    }
+    .clip-corner-lg {
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+    }
+
+    /* Scanline overlay */
+    .scanlines::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-cod-text">
+
+  <!-- Header -->
+  <header class="border-b border-cod-border bg-cod-dark relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-cod-green/5 to-transparent pointer-events-none"></div>
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+      <!-- Logo accent -->
+      <div class="flex flex-col gap-[3px]">
+        <div class="w-8 h-[3px] bg-cod-gold"></div>
+        <div class="w-5 h-[3px] bg-cod-lime"></div>
+        <div class="w-3 h-[3px] bg-cod-green"></div>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-widest uppercase text-white leading-none">IW4X</h1>
+        <p class="text-xs tracking-[0.3em] uppercase text-cod-gold font-medium">Game Maker</p>
+      </div>
+      <div class="ml-auto text-xs tracking-widest uppercase text-cod-muted font-medium">
+        COD:MW Series
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-5xl mx-auto px-6 py-12">
+
+    <!-- Section title -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="w-1 h-6 bg-cod-gold"></div>
+        <h2 class="text-xl tracking-widest uppercase font-semibold text-white">Map Selection</h2>
+      </div>
+      <p class="text-cod-muted text-sm tracking-wider ml-4 pl-3 border-l border-cod-border">
+        Choose a map to configure your game
+      </p>
+    </div>
+
+    <!-- Dropdown container -->
+    <div class="relative w-full max-w-lg" id="dropdown-wrapper">
+
+      <!-- Trigger button -->
+      <button
+        id="dropdown-trigger"
+        class="w-full flex items-center gap-3 bg-cod-panel border border-cod-border px-3 py-2 clip-corner hover:border-cod-green/60 transition-colors focus:outline-none focus:border-cod-lime group"
+        onclick="toggleDropdown()"
+      >
+        <!-- Selected map image -->
+        <div class="w-16 h-10 bg-cod-dark border border-cod-border overflow-hidden flex-shrink-0 clip-corner flex items-center justify-center">
+          <img
+            id="selected-img"
+            src=""
+            alt=""
+            class="w-full h-full object-cover hidden"
+            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden')"
+          />
+          <span id="selected-placeholder" class="text-cod-muted text-xs tracking-widest">?</span>
+        </div>
+
+        <!-- Selected map name -->
+        <span id="selected-name" class="flex-1 text-left text-cod-muted tracking-widest uppercase text-sm font-medium">
+          Select a map...
+        </span>
+
+        <!-- Category badge -->
+        <span id="selected-category" class="text-xs tracking-widest uppercase text-cod-muted hidden"></span>
+
+        <!-- Chevron -->
+        <svg id="chevron" class="w-4 h-4 text-cod-muted group-hover:text-cod-lime transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Dropdown panel -->
+      <div
+        id="map-dropdown"
+        class="hidden absolute z-50 w-full mt-1 bg-cod-panel border border-cod-border shadow-2xl shadow-black/60"
+      >
+        <!-- Search -->
+        <div class="p-2 border-b border-cod-border">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="SEARCH MAPS..."
+            class="w-full bg-cod-dark border border-cod-border px-3 py-2 text-sm tracking-widest uppercase text-cod-text placeholder-cod-muted focus:outline-none focus:border-cod-lime transition-colors"
+            oninput="filterMaps(this.value)"
+          />
+        </div>
+
+        <!-- Status filters -->
+        <div class="px-2 py-2 border-b border-cod-border">
+          <div class="text-xs tracking-widest uppercase text-cod-muted mb-2 font-semibold">Status</div>
+          <div class="flex flex-wrap gap-2">
+            <label class="flex items-center gap-2 cursor-pointer hover:text-cod-lime transition-colors">
+              <input type="checkbox" id="status-working" class="status-filter" value="working" checked onchange="applyFilters()" />
+              <span class="text-xs tracking-widest uppercase flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-cod-lime inline-block"></span>Working
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer hover:text-cod-gold transition-colors">
+              <input type="checkbox" id="status-nowaypoints" class="status-filter" value="not_working" onchange="applyFilters()" />
+              <span class="text-xs tracking-widest uppercase flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-cod-gold inline-block"></span>No Waypoints
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer hover:text-cod-red transition-colors">
+              <input type="checkbox" id="status-broken" class="status-filter" value="broken" onchange="applyFilters()" />
+              <span class="text-xs tracking-widest uppercase flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-cod-red inline-block"></span>Broken
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Category filters -->
+        <div id="category-filters" class="flex flex-wrap gap-1 px-2 py-2 border-b border-cod-border">
+          <button
+            class="category-btn active text-xs tracking-widest uppercase px-2 py-1 border transition-colors"
+            data-cat="all"
+            onclick="filterCategory(this)"
+          >All</button>
+        </div>
+
+        <!-- Map list -->
+        <div id="map-list" class="overflow-y-auto max-h-72">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Count -->
+        <div class="px-3 py-2 border-t border-cod-border flex justify-between items-center">
+          <span id="map-count" class="text-xs tracking-widest text-cod-muted uppercase"></span>
+          <div class="flex gap-3 text-xs tracking-wider text-cod-muted uppercase">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cod-lime inline-block"></span>Working</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cod-gold inline-block"></span>No Waypoints</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cod-red inline-block"></span>Broken</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected map info card -->
+    <div id="map-info-card" class="hidden mt-8">
+      <div class="bg-cod-panel border border-cod-border clip-corner-lg overflow-hidden scanlines relative">
+        <div class="flex flex-col md:flex-row">
+          <!-- Map image large -->
+          <div class="w-full md:w-80 h-60 flex-shrink-0 bg-cod-dark relative overflow-hidden flex items-center justify-center">
+            <img
+              id="card-img"
+              src=""
+              alt=""
+              class="w-full h-full object-cover"
+              onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden')"
+            />
+            <div id="card-img-placeholder" class="absolute inset-0 items-center justify-center text-cod-muted text-6xl tracking-widest font-bold hidden">?</div>
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent to-cod-panel/60"></div>
+          </div>
+          <!-- Info -->
+          <div class="flex-1 p-6">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <h3 id="card-name" class="text-3xl font-bold tracking-widest uppercase text-white leading-tight"></h3>
+              <span id="card-status" class="text-sm tracking-widest uppercase px-3 py-1 border font-medium flex-shrink-0"></span>
+            </div>
+            <p id="card-category" class="text-sm tracking-widest uppercase text-cod-gold font-semibold mb-4"></p>
+            <div class="mt-4 pt-4 border-t border-cod-border flex gap-6 text-sm tracking-wider text-cod-muted uppercase">
+              <span>Bots</span>
+              <span id="card-waypoints" class="font-semibold text-base"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let allMaps = [];
+    let activeCategory = 'all';
+    let searchQuery = '';
+    let selectedMap = null;
+    let activeStatuses = new Set(['working']); // Default: only show working maps
+
+    const categoryColors = {
+      'MW1':        'text-sky-400 border-sky-800',
+      'MW2':        'text-blue-400 border-blue-800',
+      'MW2 DLC':    'text-violet-400 border-violet-800',
+      'MW2 Custom': 'text-pink-400 border-pink-800',
+      'MW3':        'text-emerald-400 border-emerald-800',
+      'MW3 DLC':    'text-teal-400 border-teal-800',
+      'BO':         'text-orange-400 border-orange-800',
+      'COD:OL':     'text-yellow-400 border-yellow-800',
+    };
+
+    const statusDot = {
+      'working':     'bg-[#8ab84a]',
+      'not_working': 'bg-[#c8a84b]',
+      'broken':      'bg-[#c0392b]',
+    };
+    const statusLabel = {
+      'working':     'Working',
+      'not_working': 'No Waypoints',
+      'broken':      'Broken',
+    };
+    const statusStyle = {
+      'working':     'text-[#8ab84a] border-[#4a7c3f]',
+      'not_working': 'text-[#c8a84b] border-[#7a6020]',
+      'broken':      'text-[#c0392b] border-[#7a1a10]',
+    };
+
+    function mapImagePath(map) {
+      // Use image from map-data.json if available
+      if (map.image) {
+        return map.image;
+      }
+      // Fallback to generated path
+      return `assets/images/maps/${map.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
+    }
+
+    async function loadMaps() {
+      const res = await fetch('map-data.json');
+      const data = await res.json();
+      allMaps = data.maps;
+      buildCategoryFilters();
+      renderMaps();
+    }
+
+    function buildCategoryFilters() {
+      const cats = [...new Set(allMaps.map(m => m.category))].sort();
+      const container = document.getElementById('category-filters');
+      cats.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors';
+        btn.dataset.cat = cat;
+        btn.textContent = cat;
+        btn.onclick = function() { filterCategory(this); };
+        container.appendChild(btn);
+      });
+      updateCategoryButtonStyles();
+    }
+
+    function filterCategory(btn) {
+      activeCategory = btn.dataset.cat;
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateCategoryButtonStyles();
+      renderMaps();
+    }
+
+    function updateCategoryButtonStyles() {
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        if (btn.classList.contains('active')) {
+          btn.className = 'category-btn active text-xs tracking-widest uppercase px-2 py-1 border transition-colors bg-cod-green/20 border-cod-lime text-cod-lime';
+        } else {
+          btn.className = 'category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors border-cod-border text-cod-muted hover:border-cod-green hover:text-cod-text';
+        }
+        btn.dataset.cat && (btn.dataset.cat = btn.dataset.cat); // preserve
+      });
+      // Re-attach onclick after class reset
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.onclick = function() { filterCategory(this); };
+      });
+    }
+
+    function filterMaps(query) {
+      searchQuery = query.trim().toLowerCase();
+      renderMaps();
+    }
+
+    function applyFilters() {
+      activeStatuses.clear();
+      document.querySelectorAll('.status-filter:checked').forEach(checkbox => {
+        activeStatuses.add(checkbox.value);
+      });
+      renderMaps();
+    }
+
+    function renderMaps() {
+      const list = document.getElementById('map-list');
+      list.innerHTML = '';
+
+      const filtered = allMaps.filter(m => {
+        const catMatch = activeCategory === 'all' || m.category === activeCategory;
+        const searchMatch = !searchQuery || m.name.toLowerCase().includes(searchQuery) || m.category.toLowerCase().includes(searchQuery);
+        const statusMatch = activeStatuses.has(m.status);
+        return catMatch && searchMatch && statusMatch;
+      });
+
+      document.getElementById('map-count').textContent = `${filtered.length} map${filtered.length !== 1 ? 's' : ''}`;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="px-4 py-6 text-center text-cod-muted text-sm tracking-widest uppercase">No maps found</div>`;
+        return;
+      }
+
+      filtered.forEach(map => {
+        const item = document.createElement('div');
+        item.className = `map-item flex items-center gap-3 px-3 py-2 cursor-pointer transition-all ${selectedMap?.name === map.name ? 'selected' : ''}`;
+        item.onclick = () => selectMap(map);
+
+        const imgPath = mapImagePath(map);
+        const catClass = categoryColors[map.category] || 'text-cod-muted border-cod-border';
+
+        item.innerHTML = `
+          <!-- Thumbnail -->
+          <div class="w-16 h-10 flex-shrink-0 bg-cod-dark border border-cod-border overflow-hidden clip-corner relative">
+            <img
+              src="${imgPath}"
+              alt="${map.name}"
+              class="w-full h-full object-cover"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+            />
+            <div class="absolute inset-0 items-center justify-center text-cod-muted text-xs tracking-widest hidden" style="display:none">
+              ${map.name.charAt(0).toUpperCase()}
+            </div>
+          </div>
+
+          <!-- Name & category -->
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold tracking-widest uppercase text-cod-text truncate">${map.name}</div>
+            <div class="text-xs tracking-wider uppercase ${catClass.split(' ')[0]}">${map.category}</div>
+          </div>
+
+          <!-- Status dot -->
+          <div class="flex-shrink-0 w-2 h-2 rounded-full ${statusDot[map.status]}" title="${statusLabel[map.status]}"></div>
+        `;
+
+        list.appendChild(item);
+      });
+    }
+
+    function selectMap(map) {
+      selectedMap = map;
+
+      // Update trigger button
+      const imgPath = mapImagePath(map);
+      const img = document.getElementById('selected-img');
+      const placeholder = document.getElementById('selected-placeholder');
+      img.src = imgPath;
+      img.alt = map.name;
+      img.classList.remove('hidden');
+      img.onload = () => placeholder.classList.add('hidden');
+      img.onerror = () => { img.classList.add('hidden'); placeholder.classList.remove('hidden'); placeholder.textContent = map.name.charAt(0); };
+
+      document.getElementById('selected-name').textContent = map.name;
+      document.getElementById('selected-name').classList.replace('text-cod-muted', 'text-white');
+
+      const catEl = document.getElementById('selected-category');
+      catEl.textContent = map.category;
+      catEl.classList.remove('hidden');
+
+      // Update info card
+      const cardImg = document.getElementById('card-img');
+      const cardPlaceholder = document.getElementById('card-img-placeholder');
+      cardImg.src = imgPath;
+      cardImg.alt = map.name;
+      cardImg.classList.remove('hidden');
+      cardImg.onload = () => cardPlaceholder.classList.add('hidden');
+      cardImg.onerror = () => { cardImg.classList.add('hidden'); cardPlaceholder.classList.remove('hidden'); cardPlaceholder.textContent = map.name.charAt(0); };
+      document.getElementById('card-name').textContent = map.name;
+      document.getElementById('card-category').textContent = map.category;
+
+      const statusEl = document.getElementById('card-status');
+      statusEl.textContent = statusLabel[map.status];
+      statusEl.className = `text-xs tracking-widest uppercase px-2 py-0.5 border font-medium ${statusStyle[map.status]}`;
+
+      const wpEl = document.getElementById('card-waypoints');
+      if (map.status === 'not_working') {
+        wpEl.textContent = 'No Waypoints';
+        wpEl.className = 'font-semibold text-cod-gold';
+      } else if (map.status === 'working') {
+        wpEl.textContent = 'Waypoints OK';
+        wpEl.className = 'font-semibold text-cod-lime';
+      } else {
+        wpEl.textContent = 'Broken';
+        wpEl.className = 'font-semibold text-cod-red';
+      }
+
+      document.getElementById('map-info-card').classList.remove('hidden');
+
+      closeDropdown();
+      renderMaps(); // re-render to update selected highlight
+    }
+
+    function toggleDropdown() {
+      const dd = document.getElementById('map-dropdown');
+      const chevron = document.getElementById('chevron');
+      if (dd.classList.contains('hidden')) {
+        dd.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
+        setTimeout(() => document.getElementById('search-input').focus(), 50);
+      } else {
+        closeDropdown();
+      }
+    }
+
+    function closeDropdown() {
+      document.getElementById('map-dropdown').classList.add('hidden');
+      document.getElementById('chevron').style.transform = '';
+    }
+
+    // Close on outside click
+    document.addEventListener('click', e => {
+      if (!document.getElementById('dropdown-wrapper').contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    loadMaps();
+  </script>
+</body>
+</html>
