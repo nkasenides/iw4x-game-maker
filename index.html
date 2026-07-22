@@ -166,19 +166,23 @@
   <!-- Main -->
   <main class="max-w-5xl mx-auto px-6 py-12">
 
-    <!-- Section title -->
-    <div class="mb-8">
-      <div class="flex items-center gap-3 mb-1">
-        <div class="w-1 h-6 bg-cod-gold"></div>
-        <h2 class="text-xl tracking-widest uppercase font-semibold text-white">Map Selection</h2>
-      </div>
-      <p class="text-cod-muted text-sm tracking-wider ml-4 pl-3 border-l border-cod-border">
-        Choose a map to configure your game
-      </p>
-    </div>
+    <!-- Selection sections (side by side on wide screens) -->
+    <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+      <!-- Map selection column -->
+      <div class="flex-1 min-w-0">
+        <!-- Section title -->
+        <div class="mb-8">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-1 h-6 bg-cod-gold"></div>
+            <h2 class="text-xl tracking-widest uppercase font-semibold text-white">Map Selection</h2>
+          </div>
+          <p class="text-cod-muted text-sm tracking-wider ml-4 pl-3 border-l border-cod-border">
+            Choose a map to configure your game
+          </p>
+        </div>
 
-    <!-- Dropdown container -->
-    <div class="relative w-full max-w-lg" id="dropdown-wrapper">
+        <!-- Dropdown container -->
+        <div class="relative w-full max-w-lg" id="dropdown-wrapper">
 
       <!-- Trigger button -->
       <button
@@ -211,6 +215,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
+
+      <!-- Random map button -->
+      <button
+        onclick="selectRandomMap()"
+        class="mt-2 w-full py-2 px-3 bg-cod-panel border border-cod-border text-cod-lime tracking-widest uppercase font-bold transition-colors hover:border-cod-lime hover:bg-cod-green/10 text-xs"
+      >Random Map</button>
 
       <!-- Dropdown panel -->
       <div
@@ -311,9 +321,10 @@
       </div>
     </div>
 
-    <!-- Game Mode Section -->
-    <div class="mt-12">
-      <div class="flex items-center gap-3 mb-1">
+    <!-- Game Mode selection column -->
+    <div class="flex-1 min-w-0">
+      <!-- Game Mode Section -->
+      <div>
         <div class="w-1 h-6 bg-cod-gold"></div>
         <h2 class="text-xl tracking-widest uppercase font-semibold text-white">Game Mode Selection</h2>
       </div>
@@ -393,6 +404,85 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Playlist Section -->
+    <div class="mt-10">
+      <!-- Section title -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-1">
+          <div class="w-1 h-6 bg-cod-gold"></div>
+          <h2 class="text-xl tracking-widest uppercase font-semibold text-white">Playlist Builder</h2>
+        </div>
+        <p class="text-cod-muted text-sm tracking-wider ml-4 pl-3 border-l border-cod-border">
+          Add map and game mode combinations to your playlist
+        </p>
+      </div>
+      
+      <!-- Add to Playlist Section -->
+      <div class="max-w-lg">
+        <div class="bg-cod-panel border border-cod-border clip-corner-lg p-4 scanlines">
+          <h3 class="text-sm font-bold tracking-widest uppercase text-cod-lime mb-3">Current Selection</h3>
+          
+          <div class="space-y-2 mb-4 text-sm">
+            <div class="flex justify-between items-center">
+              <span class="text-cod-gold tracking-widest uppercase font-semibold">Map:</span>
+              <span id="playlist-selected-map" class="text-white font-semibold">None selected</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-cod-gold tracking-widest uppercase font-semibold">Mode:</span>
+              <span id="playlist-selected-mode" class="text-white font-semibold">None selected</span>
+            </div>
+          </div>
+
+          <button
+            id="add-to-playlist-btn"
+            onclick="addToPlaylist()"
+            disabled
+            class="w-full py-2 px-3 bg-cod-green/20 border border-cod-lime text-cod-lime tracking-widest uppercase font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-cod-green/30"
+          >Add to Playlist</button>
+        </div>
+      </div>
+
+      <!-- Playlist Display -->
+      <div class="mt-6">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-lg font-bold tracking-widest uppercase text-cod-lime">
+            Playlist <span id="playlist-count" class="text-cod-gold">0</span>
+          </h3>
+          <div class="flex gap-2">
+            <button
+              id="export-playlist-btn"
+              onclick="exportPlaylist()"
+              class="text-xs tracking-widest uppercase px-3 py-1 border border-cod-green text-cod-green hover:bg-cod-green/10 transition-all"
+            >Export</button>
+            <button
+              id="import-playlist-btn"
+              onclick="document.getElementById('import-file-input').click()"
+              class="text-xs tracking-widest uppercase px-3 py-1 border border-cod-green text-cod-green hover:bg-cod-green/10 transition-all"
+            >Import</button>
+            <button
+              id="clear-playlist-btn"
+              onclick="clearPlaylist()"
+              class="text-xs tracking-widest uppercase px-3 py-1 border border-cod-red text-cod-red hover:bg-cod-red/10 transition-all"
+            >Clear All</button>
+          </div>
+        </div>
+
+        <div id="playlist-container" class="space-y-2 max-w-4xl">
+          <div class="text-cod-muted text-sm tracking-widest uppercase p-4">No items in playlist</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input
+      id="import-file-input"
+      type="file"
+      accept=".json"
+      class="hidden"
+      onchange="importPlaylist(event)"
+    />
 
   <script>
     let allMaps = [];
@@ -406,6 +496,10 @@
     let activeGamemodeCategory = 'Core Multiplayer Modes'; // Default: Core modes
     let gamemodeSearchQuery = '';
     let selectedGamemode = null;
+
+    // Playlist
+    let playlist = [];
+    const STORAGE_PLAYLIST = 'gamemaker_playlist';
 
     // LocalStorage keys
     const STORAGE_CATEGORIES = 'mapFilters_categories';
@@ -569,6 +663,24 @@
       });
     }
 
+    function selectRandomMap() {
+      // Get filtered maps based on active categories and statuses
+      let filtered = allMaps.filter(m => {
+        const categoryMatch = activeCategories.has('all') || activeCategories.has(m.category);
+        const statusMatch = activeStatuses.has(m.status);
+        return categoryMatch && statusMatch;
+      });
+
+      if (filtered.length === 0) {
+        alert('No maps available with current filters');
+        return;
+      }
+
+      // Pick random map
+      const randomMap = filtered[Math.floor(Math.random() * filtered.length)];
+      selectMap(randomMap);
+    }
+
     function renderMaps() {
       const list = document.getElementById('map-list');
       list.innerHTML = '';
@@ -715,6 +827,14 @@
       allGameModes = data.gameModes || data;
       buildGamemodeCategories();
       renderGamemodes();
+
+      // Auto-select Team Deathmatch by default
+      const tdm = allGameModes
+        .flatMap(cat => cat.modes)
+        .find(mode => mode.name === 'Team Deathmatch');
+      if (tdm) {
+        selectGamemode(tdm);
+      }
     }
 
     function buildGamemodeCategories() {
@@ -862,8 +982,196 @@
       }
     });
 
+    // Playlist functions
+    function updatePlaylistDisplay() {
+      document.getElementById('playlist-selected-map').textContent = selectedMap ? selectedMap.name : 'None selected';
+      document.getElementById('playlist-selected-mode').textContent = selectedGamemode ? selectedGamemode.name : 'None selected';
+      
+      const btn = document.getElementById('add-to-playlist-btn');
+      if (selectedMap && selectedGamemode) {
+        btn.disabled = false;
+      } else {
+        btn.disabled = true;
+      }
+    }
+
+    function addToPlaylist() {
+      if (!selectedMap || !selectedGamemode) return;
+      
+      // Check for duplicate
+      const isDuplicate = playlist.some(item => 
+        item.map.name === selectedMap.name && item.mode.name === selectedGamemode.name
+      );
+
+      if (isDuplicate) {
+        if (!confirm(`"${selectedMap.name}" × "${selectedGamemode.name}" is already in the playlist. Add it again?`)) {
+          return;
+        }
+      }
+      
+      playlist.push({
+        id: Date.now(),
+        map: selectedMap,
+        mode: selectedGamemode
+      });
+
+      savePlaylist();
+      renderPlaylist();
+    }
+
+    function removeFromPlaylist(id) {
+      playlist = playlist.filter(item => item.id !== id);
+      savePlaylist();
+      renderPlaylist();
+    }
+
+    function clearPlaylist() {
+      if (!confirm('Are you sure you want to clear the entire playlist? This cannot be undone.')) {
+        return;
+      }
+      playlist = [];
+      savePlaylist();
+      renderPlaylist();
+    }
+
+    function renderPlaylist() {
+      const container = document.getElementById('playlist-container');
+      document.getElementById('playlist-count').textContent = playlist.length;
+
+      if (playlist.length === 0) {
+        container.innerHTML = '<div class="text-cod-muted text-sm tracking-widest uppercase p-4">No items in playlist</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      playlist.forEach((item, index) => {
+        const entry = document.createElement('div');
+        entry.className = 'bg-cod-panel border border-cod-border clip-corner-lg p-3 flex justify-between items-center scanlines';
+        
+        entry.innerHTML = `
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-white tracking-widest uppercase">
+              ${item.map.name} <span class="text-cod-muted">×</span> ${item.mode.name}
+            </div>
+            <div class="text-xs text-cod-muted tracking-widest uppercase mt-1">
+              ${item.map.category} · ${item.mode.type}
+            </div>
+          </div>
+          <button
+            onclick="removeFromPlaylist(${item.id})"
+            class="ml-3 px-2 py-1 text-xs border border-cod-red text-cod-red tracking-widest uppercase hover:bg-cod-red/10 transition-all"
+          >Remove</button>
+        `;
+        
+        container.appendChild(entry);
+      });
+    }
+
+    function savePlaylist() {
+      localStorage.setItem(STORAGE_PLAYLIST, JSON.stringify(playlist));
+    }
+
+    function loadPlaylist() {
+      const saved = localStorage.getItem(STORAGE_PLAYLIST);
+      if (saved) {
+        try {
+          playlist = JSON.parse(saved);
+          renderPlaylist();
+        } catch (e) {
+          console.error('Error loading playlist:', e);
+        }
+      }
+    }
+
+    function exportPlaylist() {
+      if (playlist.length === 0) {
+        alert('Playlist is empty. Nothing to export.');
+        return;
+      }
+
+      const exportData = playlist.map(item => ({
+        map: item.map.name,
+        mapCategory: item.map.category,
+        gameMode: item.mode.name,
+        gameModeCategory: item.mode.type
+      }));
+
+      const json = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `playlist-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function importPlaylist(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (!Array.isArray(data)) {
+            alert('Invalid playlist file format. Expected an array.');
+            return;
+          }
+
+          let importedCount = 0;
+          data.forEach(entry => {
+            const map = allMaps.find(m => m.name === entry.map);
+            const mode = allGameModes
+              .flatMap(cat => cat.modes)
+              .find(m => m.name === entry.gameMode);
+
+            if (map && mode) {
+              playlist.push({
+                id: Date.now() + Math.random(),
+                map: map,
+                mode: mode
+              });
+              importedCount++;
+            }
+          });
+
+          if (importedCount === 0) {
+            alert('No valid entries found in the playlist file.');
+          } else {
+            alert(`Imported ${importedCount} out of ${data.length} playlist entries.`);
+            savePlaylist();
+            renderPlaylist();
+          }
+        } catch (error) {
+          alert('Error parsing playlist file: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+
+      // Reset file input
+      event.target.value = '';
+    }
+
+    // Update playlist display when map/mode selected
+    const originalSelectMap = selectMap;
+    selectMap = function(map) {
+      originalSelectMap.call(this, map);
+      updatePlaylistDisplay();
+    };
+
+    const originalSelectGamemode = selectGamemode;
+    selectGamemode = function(mode) {
+      originalSelectGamemode.call(this, mode);
+      updatePlaylistDisplay();
+    };
+
     loadMaps();
     loadGameModes();
+    loadPlaylist();
   </script>
 </body>
 </html>
