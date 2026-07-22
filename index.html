@@ -3,7 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Create custom playlists for Call of Duty games. Select maps and game modes to build your perfect loadout." />
+  <meta name="theme-color" content="#8ab84a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="IW4X Maker" />
+  
   <title>IW4X Game Maker</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -158,7 +171,7 @@
         <p class="text-xs tracking-[0.3em] uppercase text-cod-gold font-medium">Game Maker</p>
       </div>
       <div class="ml-auto text-xs tracking-widest uppercase text-cod-muted font-medium">
-        COD:MW Series
+        Team HF
       </div>
     </div>
   </header>
@@ -418,12 +431,12 @@
           Add map and game mode combinations to your playlist
         </p>
       </div>
-      
+
       <!-- Add to Playlist Section -->
       <div class="max-w-lg">
         <div class="bg-cod-panel border border-cod-border clip-corner-lg p-4 scanlines">
           <h3 class="text-sm font-bold tracking-widest uppercase text-cod-lime mb-3">Current Selection</h3>
-          
+
           <div class="space-y-2 mb-4 text-sm">
             <div class="flex justify-between items-center">
               <span class="text-cod-gold tracking-widest uppercase font-semibold">Map:</span>
@@ -840,7 +853,7 @@
     function buildGamemodeCategories() {
       const container = document.getElementById('gamemode-category-filters');
       container.innerHTML = '';
-      
+
       // Add "All" button
       const allBtn = document.createElement('button');
       allBtn.className = 'gamemode-category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors';
@@ -848,7 +861,7 @@
       allBtn.textContent = 'All';
       allBtn.onclick = function() { filterGamemodeCategory(this); };
       container.appendChild(allBtn);
-      
+
       allGameModes.forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'gamemode-category-btn text-xs tracking-widest uppercase px-2 py-1 border transition-colors';
@@ -891,7 +904,7 @@
       list.innerHTML = '';
 
       let filtered = [];
-      
+
       if (activeGamemodeCategory === 'all') {
         // Show all modes from all categories
         allGameModes.forEach(cat => {
@@ -904,7 +917,7 @@
           filtered = category.modes;
         }
       }
-      
+
       // Apply search filter
       filtered = filtered.filter(m => {
         const searchMatch = !gamemodeSearchQuery || m.name.toLowerCase().includes(gamemodeSearchQuery) || m.description.toLowerCase().includes(gamemodeSearchQuery);
@@ -986,7 +999,7 @@
     function updatePlaylistDisplay() {
       document.getElementById('playlist-selected-map').textContent = selectedMap ? selectedMap.name : 'None selected';
       document.getElementById('playlist-selected-mode').textContent = selectedGamemode ? selectedGamemode.name : 'None selected';
-      
+
       const btn = document.getElementById('add-to-playlist-btn');
       if (selectedMap && selectedGamemode) {
         btn.disabled = false;
@@ -997,9 +1010,9 @@
 
     function addToPlaylist() {
       if (!selectedMap || !selectedGamemode) return;
-      
+
       // Check for duplicate
-      const isDuplicate = playlist.some(item => 
+      const isDuplicate = playlist.some(item =>
         item.map.name === selectedMap.name && item.mode.name === selectedGamemode.name
       );
 
@@ -1008,7 +1021,7 @@
           return;
         }
       }
-      
+
       playlist.push({
         id: Date.now(),
         map: selectedMap,
@@ -1047,7 +1060,7 @@
       playlist.forEach((item, index) => {
         const entry = document.createElement('div');
         entry.className = 'bg-cod-panel border border-cod-border clip-corner-lg p-3 flex justify-between items-center scanlines';
-        
+
         entry.innerHTML = `
           <div class="flex-1">
             <div class="text-sm font-semibold text-white tracking-widest uppercase">
@@ -1062,7 +1075,7 @@
             class="ml-3 px-2 py-1 text-xs border border-cod-red text-cod-red tracking-widest uppercase hover:bg-cod-red/10 transition-all"
           >Remove</button>
         `;
-        
+
         container.appendChild(entry);
       });
     }
@@ -1116,7 +1129,7 @@
       reader.onload = function(e) {
         try {
           const data = JSON.parse(e.target.result);
-          
+
           if (!Array.isArray(data)) {
             alert('Invalid playlist file format. Expected an array.');
             return;
@@ -1172,6 +1185,17 @@
     loadMaps();
     loadGameModes();
     loadPlaylist();
+
+    // Register Service Worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered:', registration);
+        })
+        .catch(error => {
+          console.log('Service Worker registration failed:', error);
+        });
+    }
   </script>
 </body>
 </html>

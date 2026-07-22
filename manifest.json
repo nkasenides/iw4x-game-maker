@@ -1,0 +1,64 @@
+{
+  "name": "IW4X Game Maker",
+  "short_name": "IW4X Maker",
+  "description": "Create custom playlists for Call of Duty games. Select maps and game modes to build your perfect loadout.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#8ab84a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%230a0a0a' width='540' height='720'/><rect fill='%238ab84a' x='10' y='10' width='520' height='700' fill='none' stroke='%238ab84a' stroke-width='3'/><text x='270' y='360' font-size='60' font-weight='bold' fill='%238ab84a' text-anchor='middle' dominant-baseline='middle'>IW4X</text><text x='270' y='420' font-size='40' font-weight='bold' fill='%238ab84a' text-anchor='middle' dominant-baseline='middle'>Game Maker</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Playlist",
+      "short_name": "Playlist",
+      "description": "Start creating a new playlist",
+      "url": "./?action=new-playlist",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%238ab84a' width='96' height='96'/><text x='48' y='55' font-size='40' font-weight='bold' fill='%230a0a0a' text-anchor='middle' dominant-baseline='middle'>+</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "categories": ["games", "productivity"],
+  "prefer_related_applications": false
+}
+
+
